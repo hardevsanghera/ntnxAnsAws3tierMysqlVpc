@@ -70,12 +70,12 @@
          centos_pub_key: "{{ item }}"
       with_file: "{{ dbserverPUB_key_file }}"
 
-    - name: (4 of 24) template the password for webadmin user into user_data
+    - name: (4 of 24) template the password for webadmin user into user_data.sh
       template:
         src: user_data.j2
         dest: user_data.sh
 
-    - name: (5 of 24) template an authorized key for webadmin user into user_data
+    - name: (5 of 24) template an authorized key for webadmin user into cloud-init.sh
       template:
         src: cloud-init.j2
         dest: cloud-init.sh
