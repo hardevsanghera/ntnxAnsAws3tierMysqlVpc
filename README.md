@@ -53,6 +53,14 @@ On average complete deployment (not including the image upload) for the main ntn
      <li>mySQL Workbench (from your workstation will do it) to connect to the original and clones datbases and show difference in data.</li>
      <li>For the demo any passwords / userids you would have entered in vars/vars.yaml.
 </ul>
+<h2>Tear Down/Delete</h2>
+<p>No Delete logic is implemented, you will need to manually (via UI) delete:
+     <ol>
+          <li>AWS instances (x3) in your VPC</li>
+          <li>AWS VPC (which will delete the subnets, security group, route and IGW</li>
+          <li>AWS EC2 key pair</li>
+          <li>Nutanix AHV database server VM</li>
+     </ol>
 <h2>Versions</h2>
 <p>Tested and working with:
 <ul>
