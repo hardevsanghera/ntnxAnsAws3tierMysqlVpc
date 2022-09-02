@@ -21,18 +21,16 @@
      <li>AWS VPC including subnet, key pair (pem file) and inbound security group rules - see the comments in the playbook.</li>
      <li>Nutanix AHV based cluster managed by Prism Central (PC), with credentials</li>
      <li>CentOS 7 AHV disk image, from here: http://download.nutanix.com/Calm/CentOS-7-x86_64-1908.qcow2
- (or you can make your won - should be cloud-init enabled)- the getImageplay.yaml Ansible playbook will fetch the image for you - edit vars/vars.yaml first.
+ (or you can make your won - should be cloud-init enabled)- the getImageplay.yaml Ansible playbook will fetch the image for you - edit vars/vars.yaml first.  See also the Versions section below.
 </ol>
 <h1>How to install and get the webapp working</h1>
 <ol>
      <li>verify pre-reqs above</li>
-     <li>git clone this repo</li>
-     <li>edit vars/vars.yaml to reflect your PC and AWS VPC - just the variables marked EDIT</li>
-     <li>Optional: edit getImageplay.yaml to reflect your Prism Central(PC)</li>
-     <li>Optional: $ ansible-playbook getImageplay.yaml - Or you can use the PC UI to upload the image as CentOS7.qcow2 from the URI above.</li>
-     <li>Althouh previous steps are optional you HAVE to have a valid CentOS 7 AHV Disk image!</li>
-     <li>copy your ec2 key pair file (something.pem) to the repo folder where all the other files are</li>
-     <li>$ ansible-playbook ntnxawsplay.yaml</li>
+     <li>$git clone <this repo></li>
+     <li>edit vars/vars.yaml to reflect your Prism Central PC and Nutanix Cluster - just the variables marked EDIT</li>
+     <li>Optional: edit varsaws/varsaws.yaml to reflect your target AWS VPC - used by setupVpc.yaml playbook which sets up an AWS VPC to deploy into</li>
+     <li>$ ansible-playbook getImageplay.yaml - Or you can use the PC UI to upload the image as CentOS7.qcow2 from the URI above.</li>
+     <li>$ ansible-playbook ntnxawsplay.yaml - deploy the 3-tier Laravel Tasks application into your AWS VPC and Nutanix CLuster</li>
 </ol>
 <p>The last task to be run will print out the public IP addresses of the loadbalancer (HAProxy) and the two webservers.  Point your browser to the IP address of the loadbalancer and you will be routed through to the Task Manager webapp.</p>
 <h1>Timings</h1>
