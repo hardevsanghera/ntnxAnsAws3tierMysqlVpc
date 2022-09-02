@@ -1,0 +1,27 @@
+#!/bin/bash
+set -x
+
+touch /tmp/IWASHERE #why not?
+
+#add user
+adduser webadmin
+
+#add as a sudo enabled user
+usermod -aG wheel webadmin
+
+#setup for ssh key logins - for future use - right now we use the password for webadmin
+mkdir /home/webadmin/.ssh
+touch /home/webadmin/.ssh/authorized_keys
+
+#right modes
+chown -R webadmin:webadmin /home/webadmin/.ssh
+
+#add a password
+echo webadmin:"{{ mysql_password }}" | chpasswd
+
+#allow sudo sans password
+echo "webadmin ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/webadmin
+
+#fix ssh logins
+sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+systemctl restart sshd

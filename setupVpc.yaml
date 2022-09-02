@@ -1,0 +1,126 @@
+#Setup an AWS VPC for the application, the ntnxawsplay.yaml playbook will deploy into this VPC.
+#hardev@nutanix.com Sep'22
+- name: Setup AWS VPC - primary use deployment target for 3-tier Laravel Tasks Application
+  hosts: localhost
+  gather_facts: False
+  vars_files:
+    - varsaws/varsaws.yaml
+  tasks:
+  - name: Ceate VPC
+    ec2_vpc_net:
+      name: "{{ vpc_name }}"
+      cidr_block: "{{ vpc_cidr }}"
+      region: "{{ vpc_region }}"
+      state: present
+    register: vpc
+
+  - name: Set vpc id
+    set_fact:
+      vpc_id: "{{ vpc.vpc.id }}"
+
+  - name: Debug
+    debug:
+      var: "vpc.vpc.id"
+
+  - name: associate subnet to the VPC
+    ec2_vpc_subnet:
+      state: present
+      az: "{{ vpc_aza }}"
+      vpc_id: "{{ vpc_id }}"
+      region: "{{ vpc_region }}"
+      cidr: "{{ sna_cidr }}"
+      map_public: yes
+      resource_tags:
+        Name: "{{ sna_name }}"
+    register: subneta
+
+  - name: Debug
+    debug:
+      var: "subneta.subnet"
+
+  - name: associate subnet to the VPC
+    ec2_vpc_subnet:
+      state: present
+      az: "{{ vpc_azb }}"
+      vpc_id: "{{ vpc_id }}"
+      region: "{{ vpc_region }}"
+      cidr: "{{ snb_cidr }}"
+      map_public: yes
+      resource_tags:
+        Name: "{{ snb_name }}"
+    register: subnetb
+ 
+  - name: create IGW
+    ec2_vpc_igw:
+      vpc_id: "{{ vpc_id }}"
+      region: "{{ vpc_region }}"
+      state: "present"
+      tags:
+        Name: "{{ igw_name }}"
+    register: igw
+
+  - name: Route IGW
+    ec2_vpc_route_table:
+      vpc_id: "{{ vpc_id }}"
+      region: "{{ vpc_region }}"
+      subnets:
+        - "{{ subneta.subnet.id }}"
+        - "{{ subnetb.subnet.id }}"
+      routes:
+        - dest: 0.0.0.0/0
+          gateway_id: "{{ igw.gateway_id  }}"
+      tags:
+        Name: "{{ rt_name }}"
+ 
+  - name: Create Security Group
+    ec2_group:
+      name: "{{ sg_name }}"
+      description: 3 Tier Tasks SG
+      vpc_id: "{{ vpc_id }}"
+      region: "{{ vpc_region }}"
+      rules:
+        - proto: tcp
+          ports:
+          - 80
+          cidr_ip: 0.0.0.0/0
+        - proto: tcp
+          ports:
+          - 22
+          cidr_ip: 0.0.0.0/0
+    register: security_group
+
+  - name: Debug
+    debug:
+      var: "security_group"
+
+  - name: create a new ec2 key pair
+    ec2_key: 
+      name: "{{ kp_name }}"
+      region: "{{ vpc_region }}"
+    register: keypair
+
+  - name: Debug
+    debug:
+      var: "keypair"
+  
+  - name: Copy EC2 Private Key locally so it can be later on used to SSH into the instance
+    copy: 
+      content: "{{ keypair.key.private_key }}" 
+      dest: "{{ key_dir }}/{{ kp_name }}.pem"
+    when: keypair.changed == true
+
+  - name: Change file mode of private key
+    ansible.builtin.file:
+      path: "{{ key_dir }}/{{ kp_name }}.pem"
+      mode: '0400'
+    delegate_to: 127.0.0.1
+
+  - name: Set variables in main vars file for application deployment to the newly created VPC
+    ansible.builtin.blockinfile:
+      path: vars/vars.yaml
+      insertafter:
+      block: | 
+        aws_subnet: "{{ subneta.subnet.id }}"
+        aws_security_group: "{{ security_group.group_id }}"
+        aws_key_file: "{{ kp_name }}"
+    delegate_to: 127.0.0.1

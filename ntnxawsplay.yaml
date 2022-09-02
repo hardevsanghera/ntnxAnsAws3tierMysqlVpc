@@ -1,0 +1,247 @@
+---
+#v1.0 ntnxawsplay.yaml
+#This playbook deploys a 3-tier application architecture.
+#The backend database tier is on Nutanix AHV and the middleware and loadbalancer tiers are on aws.
+#The tasks application that is deployed (a Laravel framework app), and the deployment of it was first done on Nutanix Calm
+#aka Self Service.  I tried to reuse scripts from that deployment where possible - this means 
+#that not every task is performed "the ansible way", nor are these best practices for ansible  or
+#deploying apps on-prem+aws.
+#However, you do end up with an app, called Task Manager, with a MySQL database that is compatible with
+#Nutanix Era (aka Database Service) - since the front end is in aws the application can be acccessed via the loadbalancer 
+#public IP from any device with a browser from anywhere.
+#
+#NB: The middle layer communicates with the back-end via an SSH tunnel, this tunnel will drop after about 2 hours, BEWARE when doing
+#eg. a demo, suggest setting up an hour or so before.
+#
+#You will need an image called "CentOS7.qcow2"  in Prism Central (yes, with the suffix) which you can get at:
+#http://download.nutanix.com/Calm/CentOS-7-x86_64-1908.qcow2
+#Pull the image into your Prism Central via the UI or use getimageplay.yaml,
+#it will pull the image into your Prism Central - edit that play before using it.
+#
+#Your ec2 Security Group needs to have the following Inbound Rules defined:
+# IP Version        Type            Protocol      Port range       Source
+# IPv4              all ICMP - IPv4 TCP           All              0.0.0.0/0
+# IPv4              HTTP            TCP           80               0.0.0.0/0
+# IPv4              SSH             TCP           22               0.0.0.0/0
+#
+#WARNING: dbserverkey and dbserverkey.pub rsa files/keys will be "force" overwritten in the playbook directory
+#There are PAUSE tasks in the playbook - they are "long enough" but you might need to extend them to 
+#avoid "failed to connect to host via ssh" errors.
+#Don't forget to copy your AWS .pem file into the directory this play is being run from.
+#hardev@nutanix.com Aug'22
+
+- hosts: localhost
+  gather_facts: False
+  vars_files:
+    - vars/vars.yaml
+  collections:
+    - nutanix.ncp
+  module_defaults:
+    #Edit parameters commented #EDIT to work with your Nutanix Prism Central - nope, didn't put them in a var file
+    group/nutanix.ncp.ntnx:
+      nutanix_host: "{{ nutanix_host }}"            #EDIT for your environment - see var/var/yaml
+      nutanix_username: "{{ nutanix_username }}"    #EDIT for your environment - see var/var/yaml
+      nutanix_password: "{{ nutanix_password }}"    #EDIT for your environment - see var/var/yaml
+      validate_certs: false
+  vars:
+    loopdata: 
+      web1:
+        server: "{{ webservervmip }}"
+        index: "0"
+      web2:
+        server: "{{ webservervmip2 }}"
+        index: "1"    
+
+  tasks:
+    - name: (1 of 36) Setting Variables
+      debug: 
+        msg: "{{ ansible_play_name }}  - Did you edit the variables in ./vars/vars.yaml to reflect your environment and copy your ec2 .pem file into the current directory of the play?"  
+    
+    - name: (2 of 24) generate SSH key for accessing the database server as user centos
+      openssh_keypair:
+        path: "./{{ centos_key_file }}"
+        type: rsa
+        size: 4096
+        state: present
+        force: true
+
+    - name: (3 of 24) set variable with public key
+      set_fact: 
+         centos_pub_key: "{{ item }}"
+      with_file: "{{ dbserverPUB_key_file }}"
+
+    - name: (4 of 24) template the password for webadmin user into user_data
+      template:
+        src: user_data.j2
+        dest: user_data.sh
+
+    - name: (5 of 24) template an authorized key for webadmin user into user_data
+      template:
+        src: cloud-init.j2
+        dest: cloud-init.sh
+
+#    - pause:
+#        seconds: 60
+
+    - name: (6 of 24) Create database tier MySQL VM
+      ntnx_vms:
+        state: present
+        name: "MySQL-vm"
+        desc: "Backend MySQL DB for 3-tier tasks application"
+        categories:
+          AppType:
+            - "Default"
+        cluster:
+          name: "{{ cluster_name }}"
+        networks:
+          - is_connected: True
+            subnet:
+              name: "{{ subnet_name }}"
+        disks:
+          - type: "DISK"
+            size_gb: 50
+            bus: "SCSI"
+            clone_image:
+              name: "{{ image_name }}"
+        vcpus: 4
+        cores_per_vcpu: 1
+        memory_gb: 16
+        guest_customization:
+          type: "cloud_init"
+          script_path: "{{ script_path }}"
+          is_overridable: True
+      register: output
+
+    - name: (7 of 24) mysql vm ip
+      set_fact:
+        mysqlvmip: "{{ output.response.spec.resources.nic_list[0].ip_endpoint_list[0].ip }}"
+
+    - name: (8 of 24) Print out MySQL VM IP
+      debug:
+        var: "mysqlvmip"
+
+    - name: (9 of 24) Dynamically add newly created VM to the inventory
+      add_host:
+        hostname: "{{ mysqlvmip }}"
+        groups: threetiervms
+        ansible_ssh_user: "{{ centos_vm_user }}"
+        ansible_ssh_private_key_file: "{{ centos_key_file }}"
+
+    - pause: #Work around for timing issues.
+        seconds: 60
+
+    - name: (10 of 24) Change password for user centos on dbserver
+      ansible.builtin.user:
+         name: "{{ centos_vm_user }}"
+         state: present
+         password: "{{ centos_vm_pw | password_hash('sha512') }}"
+      delegate_to: "{{ mysqlvmip }}"
+      become: true
+
+    - name: (11 of 24) Install/setup MySQL on the newly deployed VM
+      ansible.builtin.script: "./setupMysql.sh {{ mysql_password }}"
+      delegate_to: "{{ mysqlvmip }}"
+
+    - name: (12 of 24) Three Tier VMs - Provision EC2 instances with a public IP address
+      amazon.aws.ec2_instance:
+        count: 3 #hard coded as the requirement is exactly 3 for the playbook to work
+        key_name: "{{ aws_key_file }}"
+        aws_region: "{{ aws_region }}"
+        vpc_subnet_id: "{{ aws_subnet }}" #yes, use the same subnet and probabaly the same AZ!  
+        instance_type: "{{ aws_instance_type }}"
+        security_group: "{{ aws_security_group }}"
+        network:
+          assign_public_ip: true
+        image_id: "{{ aws_image_id }}"
+        tags:
+          environment: Testing
+          Tier: allthree
+        state: running
+        user_data: "{{ lookup('file', cinit_script_path) }}" 
+        wait: yes
+        wait_timeout: 90
+
+      register: result
+
+#    - pause: #Work around for timing issues.
+#        seconds: 60
+
+    - name: (13 of 24) set variable webserver as vm's public ip
+      set_fact:
+        webservervmip: "{{ result.instances[0].network_interfaces[0].association.public_ip }}"
+
+    - name: (14 of 24) set variable webserver as vm's public ip
+      set_fact:
+        webservervmip2: "{{ result.instances[1].network_interfaces[0].association.public_ip }}"
+
+    - name: (15 of 24) set variable webserver as vm's public ip
+      set_fact:
+        haproxyvmip: "{{ result.instances[2].network_interfaces[0].association.public_ip }}"
+
+    - name: (16 of 24) name the webserver [1 of 2] 
+      amazon.aws.ec2_tag:
+        region: "{{ aws_region }}"
+        resource: "{{ result.instances[0].instance_id }}"
+        tags:
+          Name: "webservervm1of2"
+        state: present
+
+    - name: (17 of 24) name the webserver [2 of 2] 
+      amazon.aws.ec2_tag:
+        region: "{{ aws_region }}"
+        resource: "{{ result.instances[1].instance_id }}"
+        tags:
+          Name: "webservervm2of2"
+        state: present
+
+    - name: (18 of 24) name the loadbalancer 
+      amazon.aws.ec2_tag:
+        region: "{{ aws_region }}"
+        resource: "{{ result.instances[2].instance_id }}"
+        tags:
+          Name: "HAProxyvm"
+        state: present
+
+    - name: (19 of 24) Dynamically add newly created VMs to the inventory
+      add_host:
+        hostname: "{{ item }}"
+        groups: threetiervms
+        ansible_ssh_user: "{{ vm_user }}"
+        ansible_ssh_private_key_file: "keys/{{ aws_key_file }}.pem"  #**Here we HAVE to have the .pem suffix
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o ConnectTimeout=60"
+      with_items:
+      - "{{ haproxyvmip }}"
+      - "{{ webservervmip }}"
+      - "{{ webservervmip2 }}"
+
+#    - pause: #Work around for timing issues.
+#        seconds: 60
+
+    - name: (20 of 24) Install/Setup HAProxy
+      ansible.builtin.script: "./setupHAProxy.sh {{ webservervmip + ',' + webservervmip2 }}" 
+      delegate_to: "{{ haproxyvmip }}" 
+
+    - name: (21 of 24) dbserver - Install/Setup Database server - setup tunnels from webserver x2 back to the database server
+      ansible.builtin.script: "./setupTunnel.sh {{ mysql_password + ' ' + item }}"
+      delegate_to: "{{ mysqlvmip }}" 
+      with_items:
+      - "{{ webservervmip }}"
+      - "{{ webservervmip2 }}"
+
+    - name: (22 of 24) WebServer - Install/Setup Webserver x2 - install nginx/PHP/laravel/Task application
+      ansible.builtin.script: "./setupWebServer.sh {{ mysql_password + ' ' + item.index }}"
+      delegate_to: "{{ item.server }}"
+      with_items:
+      - "{{ loopdata.web1 }}"
+      - "{{ loopdata.web2 }}"
+
+    - name: (23 of 24) WebServer - Install/Setup Webserver - customize the app web page x2
+      ansible.builtin.script: "./customizePHP.sh {{ item.index }}"
+      delegate_to: "{{ item.server }}"
+      with_items:
+      - "{{ loopdata.web1 }}"
+      - "{{ loopdata.web2 }}"
+
+    - name: (24 of 24) Print out IP addresses, open a web browser tab at the HAProxy IP address
+      debug:
+        msg: "{{ 'HAProxy/loadbalancer IP: ' +  haproxyvmip + '     Webserver1of2 IP: ' + webservervmip + ' Webserver2of2 IP: ' + webservervmip2 }}"

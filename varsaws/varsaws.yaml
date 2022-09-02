@@ -1,0 +1,15 @@
+#
+vpc_name: NTNXvpc
+vpc_cidr: 172.31.0.0/16
+vpc_region: us-west-2
+vpc_aza: us-west-2a
+vpc_azb: us-west-2b
+sna_cidr: 172.31.10.0/24
+sna_name: NTNXsna
+snb_cidr: 172.31.20.0/24
+snb_name: NTNXsnb
+igw_name: NTNXigw
+rt_name: NTNXrt
+sg_name: NTNXsg
+kp_name: NTNXkp
+key_dir: keys

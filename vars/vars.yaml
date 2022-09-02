@@ -1,0 +1,28 @@
+#Edit variables (commented EDIT) to work with your Nutanix Prism Central and AWS account
+#My setup includes the aws key/secret in the default credential stanza of my home directory ~/.aws/credentials
+#which is standard as my ansible controler runs on the same ubuntu 20.04.1 VM.
+#see https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html
+#I do not use ansible vault or best practices around passwords.
+#hardev@nutanix.com Aug'22
+nutanix_host: "10.10.10.10"                #EDIT for your environment - Prism Central IP
+nutanix_username: "admin"                  #EDIT for your environment - Prism Central userid
+nutanix_password: "password"               #EDIT for your environment - Prism Central password
+aws_region: "us-west-2"                    #EDIT for your environment #ec2 instance parameter
+aws_instance_type: "t2.micro"              #EDIT for your environment #ec2 instance parameter
+aws_image_id: "ami-0cea098ed2ac54925"      #Amazon Linux 2 AMI (HVM) - Kernel 5.10, SSD Volume Type
+vm_user: "ec2-user"                        #EDIT for your environment #ec2 login: the user to ssh to your ec2 instances
+mysql_password: "mySQLabcd0"               #EDIT for your environment #ntnx login: password for your MySQL database, also used for the centos user
+cluster_name: "myNTNXcluster"              #EDIT for your environment #ntnx: Your Nutanix cluster as registerd with Prism Central
+subnet_name: "Production"                  #EDIT for your environment #ntnx: Network to deploy the database Vm to, on your Nutanix cluster       
+#
+script_path: "cloud-init.sh"               #ntnx: script used by cloud-init provisioning to customize VM
+cinit_script_path: "user_data.sh"          #ec2:  script used by ec2 provisioning to customize VM
+image_name: "CentOS7.qcow2"                #ntnx: Image used to deploy dtabase server - see comments at start to get it
+centos_vm_user: "centos"                   #ntnx: sudo enabled userid for the database server
+centos_vm_pw: "Nutanix/4u"                 #ntnx: password for the centos user on the dtabase server
+centos_key_file: "dbserverkey"             #ntnx: Private key file for dbserver ssh access
+dbserverPUB_key_file: "dbserverkey.pub"    #ntnx: ssh public key for centos user access
+
+#WARNING: dbserverkey and dbserverkey.pub rsa keys will be "force" overwritten in the playbook directory
+#Variable setup by steupVPC.yaml playbook will be appended after here in a #ANSIBLE_MANAGED_BLOCK:
+

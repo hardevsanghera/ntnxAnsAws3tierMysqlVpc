@@ -1,0 +1,70 @@
+---
+#playbook to fetch CentOS7 image (for Nutanix AHV) to use with the 3-tier Task application
+#hardev@nutanix.com Aug'22
+- hosts: localhost
+  gather_facts: false 
+  vars_files:
+    - vars/vars.yaml  
+  vars:
+    pc: "{{ nutanix_host }}"                  #EDIT for your environment - see vars/vars.yaml
+    pc_user: "{{ nutanix_username }}"         #EDIT for your environment
+    pc_password: "{{ nutanix_password }}"     #EDIT for your environment
+    new_image_name: "CentOS7.qcow2"
+    image_description: "CentOS 7 image for 3-tier (on prem NTNX + AWS) Task app"
+    image_source_uri: "http://download.nutanix.com/Calm/CentOS-7-x86_64-1908.qcow2"
+    api_uri: "{{ 'https://' + pc + ':9440/api/nutanix/v3/images' }}"
+  tasks:
+  - name: Get a list (json) of all the images known to the Prism Central
+    local_action:
+      module: uri
+      url: "{{ api_uri + '/list' }}"
+      method: POST
+      url_username: "{{ pc_user }}"
+      url_password: "{{ pc_password }}"
+      validate_certs: no
+      return_content: yes
+      status_code: 200
+      body_format: json
+      body: "{}"
+      force_basic_auth: yes
+    check_mode: false
+    register: result
+
+  - name: Show result
+    debug:
+      msg: "{{ result.json }}"
+    check_mode: false
+
+  - name: Pull the target image into Prism Central
+    local_action:
+      module: uri
+      url: "{{ api_uri }}"
+      method: POST
+      url_username: "{{ pc_user }}"
+      url_password: "{{ pc_password }}"
+      validate_certs: no
+      return_content: yes
+      status_code: 202
+      body_format: json
+      body: |
+            {
+              "spec":{
+                  "name":"{{ new_image_name }}",
+                  "resources":{
+                    "image_type":"DISK_IMAGE",
+                    "source_uri":"{{ image_source_uri }}"
+                  },
+                  "description":"{{ image_description }}"
+              },
+              "metadata":{
+                  "kind":"image"
+              }
+            }
+      force_basic_auth: yes
+    check_mode: false
+    register: result
+
+  - name: Show result of the new image call - result is returned quickly - upload will take a few minutes
+    debug:
+      msg: "{{ result.json }}"
+    check_mode: false
