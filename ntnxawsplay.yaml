@@ -55,7 +55,7 @@
   tasks:
     - name: (1 of 36) Setting Variables
       debug: 
-        msg: "{{ ansible_play_name }}  - Did you edit the variables in ./vars/vars.yaml to reflect your environment and copy your ec2 .pem file into the current directory of the play?"  
+        msg: "{{ ansible_play_name }}  - Did you edit the variables in ./vars/vars.yaml and optionaly ./varsaws/varsaws.yaml to reflect your environment?"  
     
     - name: (2 of 24) generate SSH key for accessing the database server as user centos
       openssh_keypair:
