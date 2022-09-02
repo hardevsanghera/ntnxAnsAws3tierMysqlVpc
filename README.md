@@ -26,7 +26,7 @@
 <h1>How to install and get the webapp working</h1>
 <ol>
      <li>verify pre-reqs above</li>
-     <li>$git clone <this repo></li>
+     <li>$git clone [this repo]</li>
      <li>edit vars/vars.yaml to reflect your Prism Central PC and Nutanix Cluster - just the variables marked EDIT</li>
      <li>Optional: edit varsaws/varsaws.yaml to reflect your target AWS VPC - used by setupVpc.yaml playbook which sets up an AWS VPC to deploy into</li>
      <li>$ ansible-playbook getImageplay.yaml - Or you can use the PC UI to upload the image as CentOS7.qcow2 from the URI above.</li>
