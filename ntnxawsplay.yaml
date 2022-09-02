@@ -27,7 +27,6 @@
 #WARNING: dbserverkey and dbserverkey.pub rsa files/keys will be "force" overwritten in the playbook directory
 #There are PAUSE tasks in the playbook - they are "long enough" but you might need to extend them to 
 #avoid "failed to connect to host via ssh" errors.
-#Don't forget to copy your AWS .pem file into the directory this play is being run from.
 #hardev@nutanix.com Aug'22
 
 - hosts: localhost
@@ -37,7 +36,7 @@
   collections:
     - nutanix.ncp
   module_defaults:
-    #Edit parameters commented #EDIT to work with your Nutanix Prism Central - nope, didn't put them in a var file
+    #Edit parameters commented #EDIT to work with your Nutanix Prism Central
     group/nutanix.ncp.ntnx:
       nutanix_host: "{{ nutanix_host }}"            #EDIT for your environment - see var/var/yaml
       nutanix_username: "{{ nutanix_username }}"    #EDIT for your environment - see var/var/yaml
