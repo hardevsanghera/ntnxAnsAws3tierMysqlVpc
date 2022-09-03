@@ -52,7 +52,7 @@
         index: "1"    
 
   tasks:
-    - name: (1 of 36) Setting Variables
+    - name: (1 of 24) Setting Variables
       debug: 
         msg: "{{ ansible_play_name }}  - Did you edit the variables in ./vars/vars.yaml and optionaly ./varsaws/varsaws.yaml to reflect your environment?"  
     
@@ -79,8 +79,8 @@
         src: cloud-init.j2
         dest: cloud-init.sh
 
-#    - pause:
-#        seconds: 60
+    - pause:
+        seconds: 60
 
     - name: (6 of 24) Create database tier MySQL VM
       ntnx_vms:
@@ -162,8 +162,8 @@
 
       register: result
 
-#    - pause: #Work around for timing issues.
-#        seconds: 60
+    - pause: #Work around for timing issues.
+        seconds: 60
 
     - name: (13 of 24) set variable webserver as vm's public ip
       set_fact:
@@ -213,8 +213,8 @@
       - "{{ webservervmip }}"
       - "{{ webservervmip2 }}"
 
-#    - pause: #Work around for timing issues.
-#        seconds: 60
+    - pause: #Work around for timing issues.
+        seconds: 60
 
     - name: (20 of 24) Install/Setup HAProxy
       ansible.builtin.script: "./setupHAProxy.sh {{ webservervmip + ',' + webservervmip2 }}" 
@@ -241,6 +241,18 @@
       - "{{ loopdata.web1 }}"
       - "{{ loopdata.web2 }}"
 
-    - name: (24 of 24) Print out IP addresses, open a web browser tab at the HAProxy IP address
+    - name: (24 of 24) Set Output message for completion
+      ansible.builtin.set_fact: 
+        final_msg: | 
+          "{{ 'HAProxy/loadbalancer IP: ' +  haproxyvmip + '     Webserver1of2 IP: ' + webservervmip + ' Webserver2of2 IP: ' + webservervmip2 }}"
+          "Open a web browser at the HAProxy IP Address to get to the Tasks application."
+    
+    - name: Print out final message
       debug:
-        msg: "{{ 'HAProxy/loadbalancer IP: ' +  haproxyvmip + '     Webserver1of2 IP: ' + webservervmip + ' Webserver2of2 IP: ' + webservervmip2 }}"
+        msg:  "{{ final_msg }}"
+
+    - name: Notify by email , if selected
+      ansible.builtin.shell:
+         echo "{{ final_msg }} | mail -s 'Nutanix+Ansible - Tasks Application Deployed ' + {{ email }}"  
+      when: email is defined
+      delegate_to: 127.0.0.1
