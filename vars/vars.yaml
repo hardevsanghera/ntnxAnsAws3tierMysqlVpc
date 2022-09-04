@@ -20,12 +20,20 @@ subnet_name: "Primary"                     #EDIT for your environment #ntnx: Net
                                            #Comment out the entire line set to skip sending an email, ie. #email: "name@inc.com"
 script_path: "cloud-init.sh"               #ntnx: script used by cloud-init provisioning to customize VM
 cinit_script_path: "user_data.sh"          #ec2:  script used by ec2 provisioning to customize VM
-image_name: "CentOS7.qcow2"                #ntnx: Image used to deploy dtabase server - see comments at start to get it
+image_name: "CentOS7.qcow2"                #ntnx: Image used to deploy database server - see comments at start to get it
 centos_vm_user: "centos"                   #ntnx: sudo enabled userid for the database server
 centos_vm_pw: "Nutanix/4u"                 #ntnx: password for the centos user on the dtabase server
 centos_key_file: "dbserverkey"             #ntnx: Private key file for dbserver ssh access
 dbserverPUB_key_file: "dbserverkey.pub"    #ntnx: ssh public key for centos user access
 
 #WARNING: dbserverkey and dbserverkey.pub rsa keys will be "force" overwritten in the playbook directory
-#Variable setup by steupVPC.yaml playbook will be appended after here in a #ANSIBLE_MANAGED_BLOCK:
+#Variable setup by steupVPC.yaml playbook will be appended after here in a #ANSIBLE_MANAGED_BLOCK, example follows
+#If you dont wish these playbooks to deploy your VPC then you will need to edit these variables to refect your VPC in order for the
+#main deployment playbook ntnxawsplay.yaml to work:
+# BEGIN ANSIBLE MANAGED BLOCK
+#aws_subnet: "subnet-0a00d63c63d1fbfff"
+#aws_security_group: "sg-09e28913cf2ed9fff"
+#aws_key_file: "NTNXkp"
+# END ANSIBLE MANAGED BLOCK
+
 
