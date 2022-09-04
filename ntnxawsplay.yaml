@@ -253,6 +253,6 @@
 
     - name: Notify by email , if selected
       ansible.builtin.shell:
-         echo "{{ final_msg }} | mail -s 'Nutanix+Ansible - Tasks Application Deployed ' + {{ email }}"  
+         echo "{{ final_msg }} | sudo mail -s 'Nutanix+Ansible - Tasks Application Deployed ' + {{ email }}"  
       when: email is defined
       delegate_to: 127.0.0.1
