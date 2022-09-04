@@ -244,15 +244,19 @@
     - name: (24 of 24) Set Output message for completion
       ansible.builtin.set_fact: 
         final_msg: | 
-          "{{ 'HAProxy/loadbalancer IP: ' +  haproxyvmip + '     Webserver1of2 IP: ' + webservervmip + ' Webserver2of2 IP: ' + webservervmip2 }}"
-          "Open a web browser at the HAProxy IP Address to get to the Tasks application."
+          {{'"'}}HAProxy/loadbalancer IP:  {{haproxyvmip}} Webserver1of2 IP: {{webservervmip}} Webserver2of2 IP:  {{webservervmip2}} Open a web browser at the HAProxy IP Address to get to the Tasks application.{{'"'}}
     
     - name: Print out final message
       debug:
         msg:  "{{ final_msg }}"
 
+    - name: Template the email
+      template:
+        src: email.j2
+        dest: email.tpl
+
     - name: Notify by email , if selected
       ansible.builtin.shell:
-         echo "{{ final_msg }} | sudo mail -s 'Nutanix+Ansible - Tasks Application Deployed ' + {{ email }}"  
+         cat email.tpl | sudo mail -s 'Nutanix+Ansible - Tasks Application has Deployed ' {{ email }}  
       when: email is defined
       delegate_to: 127.0.0.1
