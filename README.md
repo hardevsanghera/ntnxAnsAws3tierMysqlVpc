@@ -32,7 +32,7 @@
      <li>$ ansible-playbook getImageplay.yaml - Or you can use the PC UI to upload the image as CentOS7.qcow2 from the URI above.</li>
      <li>$ ansible-playbook ntnxawsplay.yaml - deploy the 3-tier Laravel Tasks application into your AWS VPC and Nutanix Cluster</li>
 </ol>
-<p>The last task to be run will print out the public IP addresses of the loadbalancer (HAProxy) and the two webservers.  Point your browser to the IP address of the loadbalancer and you will be routed through to the Task Manager webapp.</p>
+<p>The last task to be run will print out the public IP addresses of the loadbalancer (HAProxy) and the two webservers.  In addition  if an email address is entered and enabled in vars/vars.yaml a completion email is sent out [You must setup the email server to use - I don't deploy one.  In my setup I used Postfix on Ubuntu and Google SNMP servers].  Point your browser to the IP address of the loadbalancer and you will be routed through to the Task Manager webapp.</p>
 For example:
 <code>
      TASK [(24 of 24) Print out IP addresses, open a web browser tab at the HAProxy IP address] *************
