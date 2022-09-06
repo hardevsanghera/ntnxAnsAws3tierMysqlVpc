@@ -254,7 +254,7 @@
         from: "no-reply@deemoo.org"
         to: "{{ email }}"
         subject: "Nutanix+Ansible - Tasks Application has deployed"
-        body: "HAProxy/loadbalancer Public ip:  {{ haproxyvmip }} \n\nWebserver 1 of 2 Public ip:     {{ webservervmip }}\n.    Webserver 2 of 2 Public ip:     {{ webservervmip2 }}\n\nTasks Application is available at:\n.    http://{{ haproxyvmip }}"
+        body: "HAProxy/loadbalancer Public ip:   {{ haproxyvmip }} \n\nWebserver 1 of 2 Public ip:       {{ webservervmip }}\nWebserver 2 of 2 Public ip:       {{ webservervmip2 }}\n\nTasks Application is available at:\n    http://{{ haproxyvmip }}"
       when: email is defined
       delegate_to: "localhost"
 
