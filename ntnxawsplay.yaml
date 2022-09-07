@@ -28,8 +28,8 @@
 #There are PAUSE tasks in the playbook - they are "long enough" but you might need to extend them to 
 #avoid "failed to connect to host via ssh" errors.
 #hardev@nutanix.com Aug'22
-
-- hosts: localhost
+- name: Deploy Laravel Tasks Application to Nutanix and AWS
+  hosts: localhost
   gather_facts: False
   vars_files:
     - vars/vars.yaml
