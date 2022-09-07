@@ -38,9 +38,9 @@
   module_defaults:
     #Edit parameters commented #EDIT to work with your Nutanix Prism Central
     group/nutanix.ncp.ntnx:
-      nutanix_host: "{{ nutanix_host }}"            #EDIT for your environment - see var/var/yaml
-      nutanix_username: "{{ nutanix_username }}"    #EDIT for your environment - see var/var/yaml
-      nutanix_password: "{{ nutanix_password }}"    #EDIT for your environment - see var/var/yaml
+      nutanix_host: "{{ nutanix_host }}"            #EDIT for your environment - see var/var.yaml
+      nutanix_username: "{{ nutanix_username }}"    #EDIT for your environment - see var/var.yaml
+      nutanix_password: "{{ nutanix_password }}"    #EDIT for your environment - see var/var.yaml
       validate_certs: false
   vars:
     loopdata: 
