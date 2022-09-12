@@ -17,6 +17,7 @@
 #http://download.nutanix.com/Calm/CentOS-7-x86_64-1908.qcow2
 #Pull the image into your Prism Central via the UI or use getimageplay.yaml,
 #it will pull the image into your Prism Central - edit that play before using it.
+#The subnet in your Nutanix CLuster HAS to be managed - ie. defined with a pool of IPs.
 #
 #Your ec2 Security Group needs to have the following Inbound Rules defined:
 # IP Version        Type            Protocol      Port range       Source
