@@ -13,7 +13,8 @@ aws_image_id: "ami-0cea098ed2ac54925"      #Amazon Linux 2 AMI (HVM) - Kernel 5.
 vm_user: "ec2-user"                        #EDIT for your environment #ec2 login: the user to ssh to your ec2 instances
 mysql_password: "mySQLabcd0"               #EDIT for your environment #ntnx login: password for your MySQL database, also used for the centos user
 cluster_name: "myNTNXcluster"              #EDIT for your environment #ntnx: Your Nutanix cluster as registerd with Prism Central
-subnet_name: "Primary"                     #EDIT for your environment #ntnx: Network to deploy the database Vm to, on your Nutanix cluster  
+subnet_name: "Primary"                     #EDIT for your environment #ntnx: Network to deploy the database Vm to, on your Nutanix cluster 
+                                           #This subnet HAS to be managed, ie. have a pool of IPs.
 
 #email: "name@inc.com"                     #EDIT optional: add the email address to send completion "Application Deployed Sucessfully" message  eg. "user@deemmoo.org"      
                                            #You must setup the email server or connection to it - I don't do it.  The playbook uses a local "mail" command
