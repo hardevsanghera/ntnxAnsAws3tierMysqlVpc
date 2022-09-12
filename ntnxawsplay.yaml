@@ -96,7 +96,7 @@
         networks:
           - is_connected: True
             subnet:
-              name: "{{ subnet_name }}"
+              name: "{{ subnet_name }}" #HAS to be a managed subnet, ie. have a pool of IPs defined.
         disks:
           - type: "DISK"
             size_gb: 50
