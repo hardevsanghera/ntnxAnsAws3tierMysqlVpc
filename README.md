@@ -17,7 +17,7 @@
 <ol>
      <li>Ansible core 2.13.2</li>
      <li>Nutanix Ansible Module: https://github.com/nutanix/nutanix.ansible - great blog walk-thru: https://www.nutanix.dev/2022/08/05/getting-started-with-the-nutanix-ansible-module/</li>
-     <li>AWS Account with valid API key and secret key (allowing full admin rights), if you can run the aws cli then you should be good with the permissions you have.  run: "$aws sts get-caller-identity" to test connectivity to your AWS account - your account number should be returned.</li>
+     <li>AWS Account with valid API key and secret key (allowing full admin rights), if you can run the aws cli then you should be good with the permissions you have.  run: "$aws sts get-caller-identity" to test connectivity to your AWS account, your account number should be returned.</li>
      <li>AWS VPC including subnet, key pair (pem file) and inbound security group rules - or the playbook setupVpc.yaml will do it all for you - see the comments in the playbook.</li>
      <li>Nutanix AHV based cluster managed by Prism Central (PC), with admin credentials</li>
      <li>CentOS 7 AHV disk image, from here: http://download.nutanix.com/Calm/CentOS-7-x86_64-1908.qcow2
